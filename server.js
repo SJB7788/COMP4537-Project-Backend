@@ -13,6 +13,8 @@ server.use(
     credentials: true,
   })
 );
+
+server.use(express.static("public"));
 server.use(express.json());
 server.use(cookieParser());
 server.use(bodyParser.json());
