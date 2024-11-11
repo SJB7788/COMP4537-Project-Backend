@@ -14,7 +14,7 @@ server.use(
   })
 );
 
-server.use(express.static("public"));
+server.use(express.static("./"));
 server.use(express.json());
 server.use(cookieParser());
 server.use(bodyParser.json());
