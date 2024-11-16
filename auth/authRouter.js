@@ -92,10 +92,11 @@ router.post("/login", async (req, res) => {
       user.sessionToken = sessionToken;
       user.save();
 
-      res.setHeader(
-        "Set-Cookie",
-        `_sid=${sessionToken}; Path=/; HttpOnly; SameSite=lax;`
-      );
+      res.cookie("_sid", sessionToken, {
+        httpOnly: true,
+        secure: false,
+        maxAge: 36000000,
+      });
       res.status(200).json({ message: "Login Successful" });
       return;
     } else {
@@ -119,10 +120,13 @@ router.post("/logout", async (req, res) => {
         .status(401)
         .json({ success: false, data: {}, error: "Session does not exist!" });
     }
-    
+
     sessionExists.session = "";
     sessionExists.save();
-    res.setHeader("Set-Cookie", `_sid=; Path=/; HttpOnly; SameSite=lax;`);
+    res.setHeader(
+      "Set-Cookie",
+      `_sid=; Path=/; HttpOnly; SameSite=none; Secure;`
+    );
     return res.status(200).json({ success: true, data: {}, error: null });
   } catch (err) {
     return res
@@ -133,11 +137,11 @@ router.post("/logout", async (req, res) => {
 
 router.post("/checkSession", async (req, res) => {
   try {
-    console.log(req.body);
-    
-    const sessionExists = await User.findOne({ sessionToken: req.body.session });
+    const sessionExists = await User.findOne({
+      sessionToken: req.body.session,
+    });
     console.log(sessionExists);
-    
+
     if (!sessionExists) {
       return res
         .status(401)
