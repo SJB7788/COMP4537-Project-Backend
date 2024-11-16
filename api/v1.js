@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const ApiToken = require("../models/apiToken");
 const ApiCall = require("../models/apiCall");
 
-dotenv.config({ path: require("path").resolve(__dirname, ".env") });
+dotenv.config({ path: require("path").resolve(__dirname, "../.env") });
 
 const router = express.Router();
 
@@ -72,11 +72,13 @@ async function saveAPICallHistory(token, requestType, requestString) {
 }
 
 router.post("/summarize", tokenValidationMiddleware, (req, res) => {
+  console.log("WORKING");
+  
   // get the text from the request
   const text = req.body.text;
 
   // spawn the python script
-  const pythonProcess = spawn("python", ["summarize.py"]);
+  const pythonProcess = spawn("python3", ["summarize.py"]);
 
   // send the JSON input to the python process
   pythonProcess.stdin.write(JSON.stringify({ text }));

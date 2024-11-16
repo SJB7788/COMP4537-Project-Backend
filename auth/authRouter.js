@@ -66,6 +66,8 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const body = req.body;
+  console.log(body);
+  
   const reqKeys = ["email", "password"];
 
   if (!body && !reqKeys.every((key) => key in body)) {
@@ -91,11 +93,13 @@ router.post("/login", async (req, res) => {
 
       user.sessionToken = sessionToken;
       user.save();
-
-      res.setHeader(
-        "Set-Cookie",
-        `_sid=${sessionToken}; Path=/; HttpOnly; SameSite=lax;`
-      );
+      
+      res.cookie("_sid", sessionToken, {
+        httpOnly: true,
+        sameSite: "None",
+        secure: true,
+      });
+      
       res.status(200).json({ message: "Login Successful" });
       return;
     } else {
@@ -122,7 +126,7 @@ router.post("/logout", async (req, res) => {
     
     sessionExists.session = "";
     sessionExists.save();
-    res.setHeader("Set-Cookie", `_sid=; Path=/; HttpOnly; SameSite=lax;`);
+    res.setHeader("Set-Cookie", `_sid=; Path=/; HttpOnly; SameSite=None; Secure;`);
     return res.status(200).json({ success: true, data: {}, error: null });
   } catch (err) {
     return res
