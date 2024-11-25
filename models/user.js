@@ -8,7 +8,8 @@ const UserSchema = new Schema({
     last_name: { type: String, required: true },
     password: { type: String, required: true },
     api_token_id: { type: Schema.Types.ObjectId, ref: 'ApiToken' },
-    sessionToken: {type: String, default: null}
+    sessionToken: {type: String, default: null},
+    userType: {type: Number, default: 0, ref: 'UserType'}
   });
 
 module.exports = mongoose.model('User', UserSchema);

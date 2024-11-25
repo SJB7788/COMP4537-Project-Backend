@@ -66,8 +66,7 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const body = req.body;
-  console.log(body);
-  
+
   const reqKeys = ["email", "password"];
 
   if (!body && !reqKeys.every((key) => key in body)) {
@@ -93,13 +92,13 @@ router.post("/login", async (req, res) => {
 
       user.sessionToken = sessionToken;
       user.save();
-      
+
       res.cookie("_sid", sessionToken, {
         httpOnly: true,
         sameSite: "None",
         secure: true,
       });
-      
+
       res.status(200).json({ message: "Login Successful" });
       return;
     } else {
@@ -126,7 +125,11 @@ router.post("/logout", async (req, res) => {
 
     sessionExists.session = "";
     sessionExists.save();
-    res.setHeader("Set-Cookie", `_sid=; Path=/; HttpOnly; SameSite=None; Secure;`);
+    res.cookie("_sid", "", {
+      httpOnly: true,
+      sameSite: "None",
+      secure: true,
+    });
     return res.status(200).json({ success: true, data: {}, error: null });
   } catch (err) {
     return res
@@ -140,7 +143,6 @@ router.post("/checkSession", async (req, res) => {
     const sessionExists = await User.findOne({
       sessionToken: req.body.session,
     });
-    console.log(sessionExists);
 
     if (!sessionExists) {
       return res
@@ -155,6 +157,85 @@ router.post("/checkSession", async (req, res) => {
       .json({ success: false, data: {}, error: err.message });
   }
 });
+
+router.get("/userInfo", async (req, res) => {
+  try {
+    const user = await User.findOne({ sessionToken: req.cookies._sid });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, data: {}, error: "Session does not exist!" });
+    }
+
+    userJson = JSON.stringify({
+      first_name: user.first_name,
+      last_name: user.last_name,
+    });
+
+    return res.status(200).json({ success: true, data: userJson, error: null });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, data: {}, error: err.message });
+  }
+});
+
+router.get("/getUserDetails", async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.query.user });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, data: {}, error: "Session does not exist!" });
+    }
+
+    userJson = JSON.stringify({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+    });
+
+    return res.status(200).json({ success: true, data: userJson, error: null });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, data: {}, error: err.message });
+  }
+});
+
+router.get("/getUserApiCalls", async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.query.user });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, data: {}, error: "Session does not exist!" });
+    }
+
+    const apiTokenId = user.api_token_id;
+    const apiToken = await ApiToken.findOne({ _id: apiTokenId });
+
+    const apiCallsList = apiToken.api_list;
+    if (apiCallsList.length === 0) {
+      return res.status(200).json({ success: true, data: [], error: null });
+    }
+
+    const apiCallPromises = apiCallsList.map(async (apiCallId) => {
+      return await ApiCall.findOne({ _id: apiCallId });
+    });
+
+    const apiCallObjectList = await Promise.all(apiCallPromises);
+
+    return res
+      .status(200)
+      .json({ success: true, data: apiCallObjectList, error: null });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, data: {}, error: err.message });
+  }
+});
+
 
 router.get("/apiCalls", async (req, res) => {
   try {
@@ -182,6 +263,57 @@ router.get("/apiCalls", async (req, res) => {
     return res
       .status(200)
       .json({ success: true, data: apiCallObjectList, error: null });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, data: {}, error: err.message });
+  }
+});
+
+router.post("/checkAdmin", async (req, res) => {
+  try {
+    const user = await User.findOne({ sessionToken: req.body.session });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, data: {}, error: "Session does not exist!" });
+    }
+
+    if (user.userType === 1) {
+      return res.status(200).json({ success: true, data: {}, error: null });
+    } else {
+      return res
+        .status(401)
+        .json({ success: false, data: {}, error: "User is not an admin" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, data: {}, error: err.message });
+  }
+});
+
+router.get("/getAllUsers", async (req, res) => {
+  try {
+    // get all user and send
+    const allUsers = await User.find({});
+    const allUsersWithoutPassword = [];
+
+    for (const user of allUsers) {
+      if (user.userType === 1) {
+        continue;
+      }
+      const apiToken = await ApiToken.findOne({ _id: user.api_token_id });
+      allUsersWithoutPassword.push({
+        _id: user._id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        api_total_call: apiToken.api_list.length,
+      });
+    }
+    
+    return res.status(200).json({ success: true, data: allUsersWithoutPassword, error: null });
   } catch (err) {
     return res
       .status(500)
