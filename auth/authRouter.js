@@ -97,6 +97,7 @@ router.post("/login", async (req, res) => {
         httpOnly: true,
         sameSite: "None",
         secure: true,
+        maxAge: 360000,
       });
 
       res.status(200).json({ message: "Login Successful" });
@@ -196,6 +197,26 @@ router.get("/getUserDetails", async (req, res) => {
     });
 
     return res.status(200).json({ success: true, data: userJson, error: null });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ success: false, data: {}, error: err.message });
+  }
+});
+
+router.get("/getUserToken", async (req, res) => {
+  try {    
+    const user = await User.findOne({ sessionToken: req.cookies._sid });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, data: {}, error: "Session does not exist!" });
+    }
+    
+    const apiTokenId = user.api_token_id;
+    const apiToken = await ApiToken.findOne({ _id: apiTokenId });
+
+    return res.status(200).json({ success: true, data: apiToken.token, error: null });
   } catch (err) {
     return res
       .status(500)

@@ -7,22 +7,12 @@ const authRouter = require("./auth/authRouter");
 const apiRouterV1 = require("./api/v1");
 
 const server = express();
-server.use(
-  cors({
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        "https://comp4537-summaryproject.azurewebsites.net",
-        "http://localhost:8080",
-      ];
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+server.use(cors({
+  origin: 'https://comp4537-summaryproject.azurewebsites.net', 
+  credentials: true, 
+  methods: 'GET, PUT, POST, DELETE, OPTIONS',
+  allowedHeaders: 'Content-Type, Authorization, Content-Length',
+}));
 
 server.use(express.static("./"));
 server.use(express.json());

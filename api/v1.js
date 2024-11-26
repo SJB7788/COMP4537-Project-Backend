@@ -12,11 +12,14 @@ const router = express.Router();
 
 // token validation middleware function
 async function tokenValidationMiddleware(req, res, next) {
+  console.log(req.body);
+  
   const token = req.body.token;
 
   try {
+    console.log(token);
     const tokenValid = await ApiToken.findOne({ token: token });
-
+    
     if (!tokenValid) {
       res.status(400).json({ message: "Invalid Token" });
       return;
