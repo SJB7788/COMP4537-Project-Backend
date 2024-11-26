@@ -10,7 +10,80 @@ dotenv.config({ path: require("path").resolve(__dirname, "../.env") });
 
 const router = express.Router();
 
-// token validation middleware function
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     TokenValidation:
+ *       type: object
+ *       required:
+ *         - token
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: The API token for authentication
+ *       example:
+ *         token: "your_api_token_here"
+ *     SummarizeRequest:
+ *       type: object
+ *       required:
+ *         - text
+ *         - token
+ *       properties:
+ *         text:
+ *           type: string
+ *           description: The text to summarize
+ *         token:
+ *           type: string
+ *           description: The API token for authentication
+ *       example:
+ *         text: "This is the text that needs to be summarized."
+ *         token: "your_api_token_here"
+ *     SummarizeResponse:
+ *       type: object
+ *       properties:
+ *         summary:
+ *           type: string
+ *           description: The summarized text
+ *       example:
+ *         summary: "Summarized version of the input text."
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Summarizer
+ *   description: API for text summarization
+ */
+
+/**
+ * @swagger
+ * /summarize:
+ *   post:
+ *     summary: Summarize the given text
+ *     tags: [Summarizer]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SummarizeRequest'
+ *     responses:
+ *       200:
+ *         description: Successfully summarized the text
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SummarizeResponse'
+ *       400:
+ *         description: Bad request or invalid token
+ *       401:
+ *         description: Unauthorized, invalid token
+ *       500:
+ *         description: Server error or failure in processing
+ */
+
+// Token validation middleware function
 async function tokenValidationMiddleware(req, res, next) {
   console.log(req.body);
   
@@ -50,6 +123,7 @@ async function tokenValidationMiddleware(req, res, next) {
   });
 }
 
+// Save API call history
 async function saveAPICallHistory(token, requestType, requestString) {
   try {
     const apiCall = await ApiCall.create({
@@ -74,6 +148,7 @@ async function saveAPICallHistory(token, requestType, requestString) {
   }
 }
 
+// Summarization endpoint
 router.post("/summarize", tokenValidationMiddleware, (req, res) => {
   console.log("WORKING");
   
