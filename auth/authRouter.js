@@ -65,6 +65,8 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
+  console.log(req.headers);
+  
   const body = req.body;
 
   const reqKeys = ["email", "password"];
@@ -94,11 +96,15 @@ router.post("/login", async (req, res) => {
       user.save();
 
       res.cookie("_sid", sessionToken, {
+        path: "/",
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        sameSite: "None",
         secure: true,
-        maxAge: 360000,
+        sameSite: "None",
+        partitioned: true,
       });
+      res.setHeader("Set-Cookie", "_sid=" + sessionToken + "; SameSite=None; Secure; httpOnly=true");
+      res.setHeader("Access-Control-Allow-Credentials", "true");
 
       res.status(200).json({ message: "Login Successful" });
       return;
@@ -139,10 +145,13 @@ router.post("/logout", async (req, res) => {
   }
 });
 
-router.post("/checkSession", async (req, res) => {
+router.get("/checkSession", async (req, res) => {
   try {
+    console.log("Checking session");
+    console.log(req.headers);
+    
     const sessionExists = await User.findOne({
-      sessionToken: req.body.session,
+      sessionToken: req.cookies.session,
     });
 
     if (!sessionExists) {
