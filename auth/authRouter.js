@@ -65,8 +65,6 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  console.log(req.headers);
-  
   const body = req.body;
 
   const reqKeys = ["email", "password"];
@@ -100,11 +98,8 @@ router.post("/login", async (req, res) => {
         expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         httpOnly: true,
         secure: true,
-        sameSite: "None",
-        partitioned: true,
+        sameSite: "none",
       });
-      res.setHeader("Set-Cookie", "_sid=" + sessionToken + "; SameSite=None; Secure; httpOnly=true");
-      res.setHeader("Access-Control-Allow-Credentials", "true");
 
       res.status(200).json({ message: "Login Successful" });
       return;
@@ -145,13 +140,13 @@ router.post("/logout", async (req, res) => {
   }
 });
 
-router.get("/checkSession", async (req, res) => {
-  try {
-    console.log("Checking session");
-    console.log(req.headers);
+router.post("/checkSession", async (req, res) => {
+  try {        
+    const session = req.cookies._sid;
+    const token = req.body._sid;
     
     const sessionExists = await User.findOne({
-      sessionToken: req.cookies.session,
+      sessionToken: session,
     });
 
     if (!sessionExists) {
@@ -169,7 +164,8 @@ router.get("/checkSession", async (req, res) => {
 });
 
 router.get("/userInfo", async (req, res) => {
-  try {
+  try {    
+    console.log(req.cookies);
     const user = await User.findOne({ sessionToken: req.cookies._sid });
     if (!user) {
       return res
@@ -302,7 +298,7 @@ router.get("/apiCalls", async (req, res) => {
 
 router.post("/checkAdmin", async (req, res) => {
   try {
-    const user = await User.findOne({ sessionToken: req.body.session });
+    const user = await User.findOne({ sessionToken: req.cookies._sid });
     if (!user) {
       return res
         .status(401)

@@ -14,7 +14,7 @@ server.use(
     origin: "http://localhost:8080",
     credentials: true,
     methods: "GET, PUT, POST, DELETE, OPTIONS",
-    allowedHeaders: "Content-Type, Authorization, Content-Length, Accept, X-Requested-With, yourHeaderFeild",
+    allowedHeaders: "Content-Type, Authorization, Content-Length, Accept",
     exposedHeaders: "Content-Length, Authorization",
   })
 );
@@ -38,12 +38,13 @@ const swaggerOptions = {
   apis: ["api/v1.js"], // Path to your API routes
 };
 
+server.use(cookieParser());
+
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 server.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 server.use(express.static("./"));
 server.use(express.json());
-server.use(cookieParser());
 server.use(bodyParser.json());
 server.use(bodyParser.urlencoded({ extended: true }));
 
@@ -51,25 +52,14 @@ server.use("/auth", authRouter);
 server.use("/api/v1", apiRouterV1);
 
 server.get("/", (req, res) => {
+  console.log(req.cookies);
+  
   res.send("Hello World");
 });
 
-server.get("/test-cookie", (req, res) => {
-  const cookieSettings = {
-    path: "/",
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-  }
-  res.cookie("test", "fuc", cookieSettings);
-  
-  res.send("Cookie set");
-});
-
-server.get("/test-req-cookie", (req, res) => {
+server.get("/test", (req, res) => {
   console.log(req.cookies);
-  res.send("Cookie read");
+  res.send("fuck you");
 });
 
 const PORT = process.env.PORT || 5500;
