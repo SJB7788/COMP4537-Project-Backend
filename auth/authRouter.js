@@ -17,6 +17,9 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 const passwordManager = require("./bcrypt");
+const user = require("../models/user");
+
+const passwordManagerObj = new passwordManager.PasswordManager();
 
 const router = express.Router();
 
@@ -29,7 +32,6 @@ router.post("/register", async (req, res) => {
     res.status(400).json({ message: "Invalid JSON Body" });
     return;
   }
-  const passwordManagerObj = new passwordManager.PasswordManager();
 
   const hashedPassword = await passwordManagerObj.hashPassword(body.password);
 
@@ -84,8 +86,6 @@ router.post("/login", async (req, res) => {
       res.status(401).json({ message: "Invalid email or password" });
       return;
     }
-
-    const passwordManagerObj = new passwordManager.PasswordManager();
 
     if (await passwordManagerObj.comparePassword(password, user.password)) {
       const sessionToken = crypto.randomBytes(32).toString("hex");
@@ -344,6 +344,61 @@ router.get("/getAllUsers", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, data: {}, error: err.message });
+  }
+});
+
+router.delete("/deleteUser", async (req, res) => {
+  const body = req.body;
+
+  if (!body || body.userId) {
+    return res.status(400).json({success: false, data: {}, error: "The body of the request does not meet the requirements"});
+  }
+  
+  try {
+    const user = await User.findOne({_id: body.userId})
+
+    if (!user) {      
+      return res.status(404).json({success: false, data: {}, error: "Member does not exist"});
+    }
+
+    await User.deleteOne({_id: body.userId});
+
+    return res.status(200).json({success: true, data: {message: "User successfully deleted"}, error: null});
+  } catch (err) {
+    return res.status(500).json({success: false, data: {}, error: err.message});
+  }
+});
+
+router.put("/updatePassword", async (req, res) => {
+  const { userId, newPassword } = req.body;
+
+  if (!userId || !newPassword) {
+    return res.status(400).json({ success: false, data: {}, error: "The body of the request does not meet the requirements" });
+  }
+
+  try {
+    const user = await User.findOne({ _id: userId });
+
+    if (!user) {
+      return res.status(404).json({ success: false, data: {}, error: "User does not exist" });
+    }
+
+    const hashedPassword = passwordManagerObj.hashPassword(newPassword)
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ success: true, data: { message: "Password successfully updated" }, error: null });
+  } catch (err) {
+    return res.status(500).json({ success: false, data: {}, error: err.message });
+  }
+});
+
+router.get("/getTotalApiCount", async (req, res) => {
+  try {
+    const count = await ApiCall.countDocuments();
+    return res.status(200).json({ success: true, data: { count }, error: null });
+  } catch (err) {
+    return res.status(500).json({ success: false, data: {}, error: err.message });
   }
 });
 

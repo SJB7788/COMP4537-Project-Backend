@@ -11,7 +11,7 @@ const swaggerUi = require("swagger-ui-express");
 const server = express();
 server.use(
   cors({
-    origin: "http://localhost:8080",
+    origin: "https://comp4537-summaryproject.azurewebsites.net",
     credentials: true,
     methods: "GET, PUT, POST, DELETE, OPTIONS",
     allowedHeaders: "Content-Type, Authorization, Content-Length, Accept",
@@ -31,7 +31,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "https://44.223.10.16.nip.io/api/v1/summarize",
+        url: "https://sjbportfolio.com/api/v1/summarize",
       },
     ],
   },
